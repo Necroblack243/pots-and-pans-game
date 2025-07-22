@@ -77,73 +77,10 @@
       to { opacity: 1; transform: scale(1); }
     }
   </style>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-</head>
-<body>
-  <div id="home" class="screen active fade-in">
-    <div class="logo">POTS & PANS 🎮</div>
-    <h1>Guess the Code. Outsmart Your Opponent.</h1>
-    <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
-    <button onclick="goTo('vsAI')">Play vs AI</button>
-    <button onclick="goTo('onlineHome')">Online Mode</button>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  <!-- Local Mode -->
-  <div id="p1Secret" class="screen fade-in">
-    <h1>Player 1: Enter Secret Code</h1>
-    <input id="p1code" maxlength="4" />
-    <button onclick="goTo('p2Secret')">Next</button>
-  </div>
-
-  <div id="p2Secret" class="screen fade-in">
-    <h1>Player 2: Enter Secret Code</h1>
-    <input id="p2code" maxlength="4" />
-    <button onclick="start2v2Game()">Start Game</button>
-  </div>
-
-  <div id="p1GuessScreen" class="screen fade-in">
-    <h1>Player 1: Guess Player 2's Code</h1>
-    <input id="p1Guess" maxlength="4" />
-    <button onclick="submitGuess('p1')">Submit Guess</button>
-    <div class="result" id="p1Result"></div>
-    <button onclick="goTo('p2GuessScreen')">Next Player</button>
-  </div>
-
-  <div id="p2GuessScreen" class="screen fade-in">
-    <h1>Player 2: Guess Player 1's Code</h1>
-    <input id="p2Guess" maxlength="4" />
-    <button onclick="submitGuess('p2')">Submit Guess</button>
-    <div class="result" id="p2Result"></div>
-    <button onclick="goTo('p1GuessScreen')">Next Player</button>
-    <button onclick="restart()">Back to Home</button>
-  </div>
-
-  <!-- VS AI Mode -->
-  <div id="vsAI" class="screen fade-in">
-    <h1>Enter Your Secret Code</h1>
-    <input id="playerCode" maxlength="4" />
-    <button onclick="startAIGame()">Start</button>
-    <div class="result" id="aiResult"></div>
-  </div>
-
-  <!-- Online Mode -->
-  <div id="onlineHome" class="screen fade-in">
-    <h1>Enter Room Name</h1>
-    <input id="roomInput" />
-    <input id="onlineCode" maxlength="4" placeholder="Your Secret Code" />
-    <button onclick="joinRoom()">Join Game</button>
-    <div class="result" id="onlineResult"></div>
-    <input id="onlineGuess" maxlength="4" placeholder="Your Guess" />
-    <button onclick="submitOnlineGuess()">Submit Guess</button>
-    <button onclick="restart()">Back to Home</button>
-  </div>
-
-  <audio id="blip" src="https://cdn.pixabay.com/audio/2022/10/20/audio_dff3c0e199.mp3"></audio>
-
-  <script>
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
       authDomain: "potsandpans-9670a.firebaseapp.com",
@@ -154,99 +91,58 @@
       appId: "1:250440225068:web:4a1ba1ddcc578460f85c89",
       measurementId: "G-D5Q1RGMGLN"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    let p1Secret = "", p2Secret = "", aiSecret = "";
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    function goTo(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-      document.getElementById('blip').play();
-    }
-
-    function validate(code) {
-      return code.length === 4 && new Set(code).size === 4;
-    }
-
-    function start2v2Game() {
-      const code1 = document.getElementById('p1code').value;
-      const code2 = document.getElementById('p2code').value;
-      if (!validate(code1) || !validate(code2)) return alert("Codes must be 4 unique digits");
-      p1Secret = code1;
-      p2Secret = code2;
-      goTo('p1GuessScreen');
-    }
-
-    function submitGuess(player) {
-      let guess = document.getElementById(player + 'Guess').value;
-      if (!validate(guess)) return alert("Invalid guess");
-      let opponent = player === 'p1' ? p2Secret : p1Secret;
-      let pots = 0, pans = 0;
-      for (let i = 0; i < 4; i++) {
-        if (guess[i] === opponent[i]) pans++;
-        else if (opponent.includes(guess[i])) pots++;
-      }
-      document.getElementById(player + 'Result').innerText += `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
-      if (pans === 4) alert(`Player ${player === 'p1' ? '1' : '2'} wins!`);
-    }
-
-    function restart() {
-      location.reload();
-    }
-
-    function generateAIcode() {
-      let digits = [..."0123456789"], code = "";
-      for (let i = 0; i < 4; i++) code += digits.splice(Math.floor(Math.random() * digits.length), 1);
-      return code;
-    }
-
-    function startAIGame() {
-      const code = document.getElementById('playerCode').value;
-      if (!validate(code)) return alert("Code must be 4 unique digits");
-      let output = [], tries = 0;
-      while (tries++ < 10) {
-        let guess = generateAIcode(), pots = 0, pans = 0;
-        for (let i = 0; i < 4; i++) {
-          if (guess[i] === code[i]) pans++;
-          else if (code.includes(guess[i])) pots++;
-        }
-        output.push(`AI guessed ${guess} → ${pots} Pot(s), ${pans} Pan(s)`);
-        if (pans === 4) break;
-      }
-      document.getElementById('aiResult').innerText = output.join('\n');
-    }
-
-    function joinRoom() {
-      const room = document.getElementById('roomInput').value;
-      const code = document.getElementById('onlineCode').value;
+    window.createRoom = function () {
+      const room = Math.floor(1000 + Math.random() * 9000).toString();
+      const code = prompt("Enter your secret 4-digit code:");
       if (!validate(code)) return alert("Invalid code");
-      db.ref(`rooms/${room}/code`).set(code);
-      db.ref(`rooms/${room}/guesses`).on('value', snap => {
-        const guesses = snap.val() || [];
-        let resultText = "";
-        guesses.forEach(g => {
-          let pots = 0, pans = 0;
-          for (let i = 0; i < 4; i++) {
-            if (g[i] === code[i]) pans++;
-            else if (code.includes(g[i])) pots++;
-          }
-          resultText += `${g} → ${pots} Pot(s), ${pans} Pan(s)\n`;
-        });
-        document.getElementById('onlineResult').innerText = resultText;
+      set(ref(db, 'rooms/' + room), { p1: code });
+      document.getElementById('onlineRoomInfo').innerText = `Room Code: ${room}\nWaiting for Player 2...`;
+      goTo('onlineRoom');
+
+      onValue(ref(db, 'rooms/' + room + '/p2'), snapshot => {
+        if (snapshot.exists()) {
+          document.getElementById('onlineRoomInfo').innerText = `Game started! Opponent has joined.`;
+        }
       });
     }
 
-    function submitOnlineGuess() {
-      const room = document.getElementById('roomInput').value;
-      const guess = document.getElementById('onlineGuess').value;
-      if (!validate(guess)) return alert("Invalid guess");
-      db.ref(`rooms/${room}/guesses`).once('value', snap => {
-        let guesses = snap.val() || [];
-        guesses.push(guess);
-        db.ref(`rooms/${room}/guesses`).set(guesses);
-      });
+    window.joinRoom = function () {
+      const room = prompt("Enter Room Code:");
+      const code = prompt("Enter your secret 4-digit code:");
+      if (!validate(code)) return alert("Invalid code");
+      set(ref(db, 'rooms/' + room + '/p2'), code);
+      document.getElementById('onlineRoomInfo').innerText = `Joined Room: ${room}`;
+      goTo('onlineRoom');
     }
   </script>
+</head>
+<body>
+  <div id="home" class="screen active fade-in">
+    <div class="logo">POTS & PANS 🎮</div>
+    <h1>Guess the Code. Outsmart Your Opponent.</h1>
+    <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
+    <button onclick="goTo('vsAI')">Play vs AI</button>
+    <button onclick="goTo('onlineMenu')">Play Online</button>
+  </div>
+
+  <div id="onlineMenu" class="screen fade-in">
+    <h1>Online Mode</h1>
+    <button onclick="createRoom()">Create Room</button>
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="goTo('home')">Back</button>
+  </div>
+
+  <div id="onlineRoom" class="screen fade-in">
+    <h1>Online Room</h1>
+    <div id="onlineRoomInfo">Loading...</div>
+    <button onclick="goTo('home')">Back to Home</button>
+  </div>
+
+  <!-- Other screens remain same as your current game setup -->
+  <!-- Leave the rest of your game logic here (2v2, AI, etc.) -->
 </body>
 </html>
