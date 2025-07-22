@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pots & Pans</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #1f1f1f, #000000);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .screen.active {
+      display: flex;
+    }
+    h1 {
+      color: #ff66c4;
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 1.2rem;
+      border-radius: 12px;
+      background: #1a1a1a;
+      color: white;
+      border: 2px solid #444;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 250px;
+    }
+    button:hover {
+      background: #ff66c4;
+      color: black;
+      border-color: #ff66c4;
+    }
+    input {
+      padding: 10px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      border: none;
+      margin: 10px 0;
+      width: 200px;
+      text-align: center;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      white-space: pre-wrap;
+    }
+    .logo {
+      font-size: 4rem;
+      background: linear-gradient(90deg, #ff66c4, #66e0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .fade-in {
+      animation: fadeIn 0.6s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="home" class="screen active fade-in">
+    <div class="logo">POTS & PANS 🎮</div>
+    <h1>Guess the Code. Outsmart Your Opponent.</h1>
+    <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
+    <button onclick="goTo('vsAI')">Play vs AI</button>
+    <button onclick="alert('🌐 Online Mode coming soon — stay tuned!')">Online Mode</button>
+  </div>
+
+  <div id="p1Secret" class="screen fade-in">
+    <h1>Player 1: Enter Secret Code</h1>
+    <input id="p1code" maxlength="4" />
+    <button onclick="goTo('p2Secret')">Next</button>
+  </div>
+
+  <div id="p2Secret" class="screen fade-in">
+    <h1>Player 2: Enter Secret Code</h1>
+    <input id="p2code" maxlength="4" />
+    <button onclick="start2v2Game()">Start Game</button>
+  </div>
+
+  <div id="p1GuessScreen" class="screen fade-in">
+    <h1>Player 1: Guess Player 2's Code</h1>
+    <input id="p1Guess" maxlength="4" />
+    <button onclick="submitGuess('p1')">Submit Guess</button>
+    <div class="result" id="p1Result"></div>
+    <button onclick="goTo('p2GuessScreen')">Next Player</button>
+  </div>
+
+  <div id="p2GuessScreen" class="screen fade-in">
+    <h1>Player 2: Guess Player 1's Code</h1>
+    <input id="p2Guess" maxlength="4" />
+    <button onclick="submitGuess('p2')">Submit Guess</button>
+    <div class="result" id="p2Result"></div>
+    <button onclick="goTo('p1GuessScreen')">Next Player</button>
+    <button onclick="restart()">Back to Home</button>
+  </div>
+
+  <div id="vsAI" class="screen fade-in">
+    <h1>Enter Your Secret Code</h1>
+    <input id="playerCode" maxlength="4" />
+    <button onclick="startAIGame()">Start</button>
+    <div class="result" id="aiResult"></div>
+  </div>
+
+  <audio id="blip" src="https://cdn.pixabay.com/audio/2022/10/20/audio_dff3c0e199.mp3"></audio>
+
+  <script>
+    let p1Secret = "";
+    let p2Secret = "";
+    let aiSecret = "";
+
+    function goTo(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      document.getElementById('blip').play();
+    }
+
+    function start2v2Game() {
+      const code1 = document.getElementById('p1code').value;
+      const code2 = document.getElementById('p2code').value;
+      if (!validate(code1) || !validate(code2)) {
+        alert("Each code must be 4 unique digits");
+        return;
+      }
+      p1Secret = code1;
+      p2Secret = code2;
+      document.getElementById('p1Guess').value = '';
+      document.getElementById('p2Guess').value = '';
+      document.getElementById('p1Result').innerText = '';
+      document.getElementById('p2Result').innerText = '';
+      goTo('p1GuessScreen');
+    }
+
+    function submitGuess(player) {
+      let guess = document.getElementById(player + 'Guess').value;
+      if (!validate(guess)) {
+        alert("Guess must be 4 unique digits");
+        return;
+      }
+      let pots = 0, pans = 0;
+      let opponentCode = player === 'p1' ? p2Secret : p1Secret;
+      for (let i = 0; i < 4; i++) {
+        if (guess[i] === opponentCode[i]) pans++;
+        else if (opponentCode.includes(guess[i])) pots++;
+      }
+      const resultText = document.getElementById(player + 'Result');
+      resultText.innerText += `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
+
+      if (pans === 4) {
+        alert(`🎉 Player ${player === 'p1' ? '1' : '2'} wins!`);
+        restart();
+      }
+    }
+
+    function validate(code) {
+      return code.length === 4 && new Set(code).size === 4;
+    }
+
+    function restart() {
+      p1Secret = "";
+      p2Secret = "";
+      aiSecret = "";
+      document.getElementById('p1code').value = '';
+      document.getElementById('p2code').value = '';
+      document.getElementById('p1Guess').value = '';
+      document.getElementById('p2Guess').value = '';
+      document.getElementById('p1Result').innerText = '';
+      document.getElementById('p2Result').innerText = '';
+      document.getElementById('playerCode').value = '';
+      document.getElementById('aiResult').innerText = '';
+      goTo('home');
+    }
+
+    function startAIGame() {
+      const playerCode = document.getElementById('playerCode').value;
+      if (!validate(playerCode)) {
+        alert("Code must be 4 unique digits");
+        return;
+      }
+      aiSecret = generateAIcode();
+      let attempt = "";
+      let tries = 0;
+      const output = [];
+
+      while (tries < 10) {
+        attempt = generateAIcode();
+        let pots = 0, pans = 0;
+        for (let i = 0; i < 4; i++) {
+          if (attempt[i] === playerCode[i]) pans++;
+          else if (playerCode.includes(attempt[i])) pots++;
+        }
+        output.push(`AI guessed ${attempt} → ${pots} Pot(s), ${pans} Pan(s)`);
+        if (pans === 4) break;
+        tries++;
+      }
+
+      document.getElementById('aiResult').innerText = output.join('\n');
+    }
+
+    function generateAIcode() {
+      let digits = [..."0123456789"];
+      let code = "";
+      for (let i = 0; i < 4; i++) {
+        const idx = Math.floor(Math.random() * digits.length);
+        code += digits[idx];
+        digits.splice(idx, 1);
+      }
+      return code;
+    }
+  </script>
+</body>
+</html>
