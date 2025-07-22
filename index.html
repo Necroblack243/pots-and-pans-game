@@ -6,6 +6,9 @@
   <title>Pots & Pans</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       font-family: 'Orbitron', sans-serif;
@@ -29,7 +32,7 @@
     }
     h1 {
       color: #ff66c4;
-      font-size: 3rem;
+      font-size: 2.5rem;
       margin-bottom: 20px;
     }
     button {
@@ -77,48 +80,6 @@
       to { opacity: 1; transform: scale(1); }
     }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
-      authDomain: "potsandpans-9670a.firebaseapp.com",
-      databaseURL: "https://potsandpans-9670a-default-rtdb.firebaseio.com",
-      projectId: "potsandpans-9670a",
-      storageBucket: "potsandpans-9670a.appspot.com",
-      messagingSenderId: "250440225068",
-      appId: "1:250440225068:web:4a1ba1ddcc578460f85c89",
-      measurementId: "G-D5Q1RGMGLN"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    window.createRoom = function () {
-      const room = Math.floor(1000 + Math.random() * 9000).toString();
-      const code = prompt("Enter your secret 4-digit code:");
-      if (!validate(code)) return alert("Invalid code");
-      set(ref(db, 'rooms/' + room), { p1: code });
-      document.getElementById('onlineRoomInfo').innerText = `Room Code: ${room}\nWaiting for Player 2...`;
-      goTo('onlineRoom');
-
-      onValue(ref(db, 'rooms/' + room + '/p2'), snapshot => {
-        if (snapshot.exists()) {
-          document.getElementById('onlineRoomInfo').innerText = `Game started! Opponent has joined.`;
-        }
-      });
-    }
-
-    window.joinRoom = function () {
-      const room = prompt("Enter Room Code:");
-      const code = prompt("Enter your secret 4-digit code:");
-      if (!validate(code)) return alert("Invalid code");
-      set(ref(db, 'rooms/' + room + '/p2'), code);
-      document.getElementById('onlineRoomInfo').innerText = `Joined Room: ${room}`;
-      goTo('onlineRoom');
-    }
-  </script>
 </head>
 <body>
   <div id="home" class="screen active fade-in">
@@ -126,23 +87,176 @@
     <h1>Guess the Code. Outsmart Your Opponent.</h1>
     <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
     <button onclick="goTo('vsAI')">Play vs AI</button>
-    <button onclick="goTo('onlineMenu')">Play Online</button>
+    <button onclick="goTo('onlineHome')">Play Online</button>
   </div>
 
-  <div id="onlineMenu" class="screen fade-in">
+  <div id="p1Secret" class="screen fade-in">
+    <h1>Player 1: Enter Secret Code</h1>
+    <input id="p1code" maxlength="4" />
+    <button onclick="goTo('p2Secret')">Next</button>
+  </div>
+
+  <div id="p2Secret" class="screen fade-in">
+    <h1>Player 2: Enter Secret Code</h1>
+    <input id="p2code" maxlength="4" />
+    <button onclick="start2v2Game()">Start Game</button>
+  </div>
+
+  <div id="p1GuessScreen" class="screen fade-in">
+    <h1>Player 1: Guess Player 2's Code</h1>
+    <input id="p1Guess" maxlength="4" />
+    <button onclick="submitGuess('p1')">Submit Guess</button>
+    <div class="result" id="p1Result"></div>
+    <button onclick="goTo('p2GuessScreen')">Next Player</button>
+  </div>
+
+  <div id="p2GuessScreen" class="screen fade-in">
+    <h1>Player 2: Guess Player 1's Code</h1>
+    <input id="p2Guess" maxlength="4" />
+    <button onclick="submitGuess('p2')">Submit Guess</button>
+    <div class="result" id="p2Result"></div>
+    <button onclick="goTo('p1GuessScreen')">Next Player</button>
+    <button onclick="restart()">Back to Home</button>
+  </div>
+
+  <div id="vsAI" class="screen fade-in">
+    <h1>Enter Your Secret Code</h1>
+    <input id="playerCode" maxlength="4" />
+    <button onclick="startAIGame()">Start</button>
+    <div class="result" id="aiResult"></div>
+    <button onclick="restart()">Back to Home</button>
+  </div>
+
+  <div id="onlineHome" class="screen fade-in">
     <h1>Online Mode</h1>
+    <input id="roomCodeInput" placeholder="Room Code" />
     <button onclick="createRoom()">Create Room</button>
     <button onclick="joinRoom()">Join Room</button>
-    <button onclick="goTo('home')">Back</button>
+    <button onclick="restart()">Back</button>
+    <div class="result" id="onlineStatus"></div>
   </div>
 
-  <div id="onlineRoom" class="screen fade-in">
-    <h1>Online Room</h1>
-    <div id="onlineRoomInfo">Loading...</div>
-    <button onclick="goTo('home')">Back to Home</button>
-  </div>
+  <audio id="blip" src="https://cdn.pixabay.com/audio/2022/10/20/audio_dff3c0e199.mp3"></audio>
 
-  <!-- Other screens remain same as your current game setup -->
-  <!-- Leave the rest of your game logic here (2v2, AI, etc.) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script>
+    // CONFIGURE FIREBASE (replace with your own if needed)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
+      authDomain: "potsandpans-9670a.firebaseapp.com",
+      databaseURL: "https://potsandpans-9670a-default-rtdb.firebaseio.com",
+      projectId: "potsandpans-9670a",
+      storageBucket: "potsandpans-9670a.appspot.com",
+      messagingSenderId: "250440225068",
+      appId: "1:250440225068:web:4a1ba1ddcc578460f85c89"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let p1Secret = "";
+    let p2Secret = "";
+    let aiSecret = "";
+
+    function goTo(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      document.getElementById('blip').play();
+    }
+
+    function validate(code) {
+      return code.length === 4 && new Set(code).size === 4;
+    }
+
+    function restart() {
+      location.reload();
+    }
+
+    function start2v2Game() {
+      const code1 = document.getElementById('p1code').value;
+      const code2 = document.getElementById('p2code').value;
+      if (!validate(code1) || !validate(code2)) {
+        alert("Each code must be 4 unique digits");
+        return;
+      }
+      p1Secret = code1;
+      p2Secret = code2;
+      document.getElementById('p1Guess').value = '';
+      document.getElementById('p2Guess').value = '';
+      document.getElementById('p1Result').innerText = '';
+      document.getElementById('p2Result').innerText = '';
+      goTo('p1GuessScreen');
+    }
+
+    function submitGuess(player) {
+      let guess = document.getElementById(player + 'Guess').value;
+      if (!validate(guess)) {
+        alert("Guess must be 4 unique digits");
+        return;
+      }
+      let pots = 0, pans = 0;
+      let opponentCode = player === 'p1' ? p2Secret : p1Secret;
+      for (let i = 0; i < 4; i++) {
+        if (guess[i] === opponentCode[i]) pans++;
+        else if (opponentCode.includes(guess[i])) pots++;
+      }
+      const resultText = document.getElementById(player + 'Result');
+      resultText.innerText += `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
+      if (pans === 4) {
+        alert(`🎉 Player ${player === 'p1' ? '1' : '2'} wins!`);
+        restart();
+      }
+    }
+
+    function startAIGame() {
+      const playerCode = document.getElementById('playerCode').value;
+      if (!validate(playerCode)) {
+        alert("Code must be 4 unique digits");
+        return;
+      }
+      aiSecret = generateAIcode();
+      let attempt = "";
+      let tries = 0;
+      const output = [];
+      while (tries < 10) {
+        attempt = generateAIcode();
+        let pots = 0, pans = 0;
+        for (let i = 0; i < 4; i++) {
+          if (attempt[i] === playerCode[i]) pans++;
+          else if (playerCode.includes(attempt[i])) pots++;
+        }
+        output.push(`AI guessed ${attempt} → ${pots} Pot(s), ${pans} Pan(s)`);
+        if (pans === 4) break;
+        tries++;
+      }
+      document.getElementById('aiResult').innerText = output.join('\n');
+    }
+
+    function generateAIcode() {
+      let digits = [..."0123456789"];
+      let code = "";
+      for (let i = 0; i < 4; i++) {
+        const idx = Math.floor(Math.random() * digits.length);
+        code += digits[idx];
+        digits.splice(idx, 1);
+      }
+      return code;
+    }
+
+    function createRoom() {
+      const code = Math.floor(1000 + Math.random() * 9000).toString();
+      db.ref('rooms/' + code).set({ p1: '', p2: '' });
+      document.getElementById('onlineStatus').innerText = `Room created. Share this code: ${code}`;
+    }
+
+    function joinRoom() {
+      const code = document.getElementById('roomCodeInput').value;
+      if (code.length !== 4) return alert('Invalid code');
+      db.ref('rooms/' + code).once('value', snapshot => {
+        if (!snapshot.exists()) return alert('Room does not exist');
+        document.getElementById('onlineStatus').innerText = `Joined Room ${code}`;
+      });
+    }
+  </script>
 </body>
 </html>
