@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pots & Pans</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
@@ -33,23 +33,25 @@
       margin-bottom: 20px;
     }
     button {
-      padding: 12px 25px;
-      margin: 8px;
+      padding: 15px 30px;
+      margin: 10px;
       font-size: 1.1rem;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #1a1a1a;
       color: white;
       border: 2px solid #444;
       cursor: pointer;
       transition: 0.3s;
+      width: 220px;
     }
     button:hover {
       background: #ff66c4;
       color: black;
+      border-color: #ff66c4;
     }
     input {
       padding: 10px;
-      font-size: 1rem;
+      font-size: 1.1rem;
       border-radius: 8px;
       border: none;
       margin: 10px 0;
@@ -57,12 +59,12 @@
       text-align: center;
     }
     .result {
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 1rem;
       white-space: pre-wrap;
     }
     .logo {
-      font-size: 3rem;
+      font-size: 3.2rem;
       background: linear-gradient(90deg, #ff66c4, #66e0ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -75,35 +77,29 @@
       to { opacity: 1; transform: scale(1); }
     }
   </style>
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-
-  <!-- Home Screen -->
   <div id="home" class="screen active fade-in">
     <div class="logo">POTS & PANS 🎮</div>
     <h1>Guess the Code. Outsmart Your Opponent.</h1>
-    <button onclick="goTo('p1Secret')">2v2 (Local)</button>
+    <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
     <button onclick="goTo('vsAI')">Play vs AI</button>
     <button onclick="goTo('onlineHome')">Online Mode</button>
   </div>
 
-  <!-- Local 2v2 Screens -->
+  <!-- Local Mode Screens -->
   <div id="p1Secret" class="screen fade-in">
-    <h1>Player 1: Set Secret Code</h1>
+    <h1>Player 1: Enter Secret Code</h1>
     <input id="p1code" maxlength="4" />
     <button onclick="goTo('p2Secret')">Next</button>
   </div>
-
   <div id="p2Secret" class="screen fade-in">
-    <h1>Player 2: Set Secret Code</h1>
+    <h1>Player 2: Enter Secret Code</h1>
     <input id="p2code" maxlength="4" />
     <button onclick="start2v2Game()">Start Game</button>
   </div>
-
   <div id="p1GuessScreen" class="screen fade-in">
     <h1>Player 1: Guess Player 2's Code</h1>
     <input id="p1Guess" maxlength="4" />
@@ -111,7 +107,6 @@
     <div class="result" id="p1Result"></div>
     <button onclick="goTo('p2GuessScreen')">Next Player</button>
   </div>
-
   <div id="p2GuessScreen" class="screen fade-in">
     <h1>Player 2: Guess Player 1's Code</h1>
     <input id="p2Guess" maxlength="4" />
@@ -123,56 +118,44 @@
 
   <!-- AI Mode -->
   <div id="vsAI" class="screen fade-in">
-    <h1>Enter Your Code (AI Will Guess)</h1>
+    <h1>Enter Your Secret Code</h1>
     <input id="playerCode" maxlength="4" />
     <button onclick="startAIGame()">Start</button>
     <div class="result" id="aiResult"></div>
-    <button onclick="restart()">Back to Home</button>
   </div>
 
-  <!-- Online Mode -->
+  <!-- Online Mode (Placeholder) -->
   <div id="onlineHome" class="screen fade-in">
     <h1>Online Mode</h1>
-    <input id="onlineGameId" placeholder="Game Name" />
-    <input id="onlineSecret" placeholder="Your 4-digit Code" maxlength="4" />
-    <button onclick="createOnlineGame()">Create Game</button>
-    <button onclick="joinOnlineGame()">Join Game</button>
-    <button onclick="goTo('home')">Home</button>
+    <input id="onlineName" placeholder="Enter Your Name" />
+    <input id="roomId" placeholder="Room ID" />
+    <button onclick="createRoom()">Create Room</button>
+    <button onclick="joinRoom()">Join Room</button>
+    <div id="onlineStatus" class="result"></div>
   </div>
 
-  <div id="onlineGameScreen" class="screen fade-in">
-    <h1>Online Game</h1>
-    <input id="onlineGuess" maxlength="4" placeholder="Guess Code" />
-    <button onclick="submitOnlineGuess()">Submit Guess</button>
-    <div class="result" id="onlineResult"></div>
-    <button onclick="goTo('home')">Back to Home</button>
-  </div>
-
-  <!-- Sound -->
   <audio id="blip" src="https://cdn.pixabay.com/audio/2022/10/20/audio_dff3c0e199.mp3"></audio>
-
   <script>
-    // Firebase Config (👇 insert your Firebase config here)
     const firebaseConfig = {
-       apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
-  authDomain: "potsandpans-9670a.firebaseapp.com",
-  databaseURL: "https://potsandpans-9670a-default-rtdb.firebaseio.com",
-  projectId: "potsandpans-9670a",
-  storageBucket: "potsandpans-9670a.firebasestorage.app",
-  messagingSenderId: "250440225068",
-  appId: "1:250440225068:web:4a1ba1ddcc578460f85c89",
-  measurementId: "G-D5Q1RGMGLN"
-
+      apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
+      authDomain: "potsandpans-9670a.firebaseapp.com",
+      databaseURL: "https://potsandpans-9670a-default-rtdb.firebaseio.com",
+      projectId: "potsandpans-9670a",
+      storageBucket: "potsandpans-9670a.firebasestorage.app",
+      messagingSenderId: "250440225068",
+      appId: "1:250440225068:web:4a1ba1ddcc578460f85c89",
+      measurementId: "G-D5Q1RGMGLN"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let p1Secret = "", p2Secret = "", aiSecret = "";
+    let p1Secret = "";
+    let p2Secret = "";
+    let aiSecret = "";
 
-    function goTo(id) {
+    function goTo(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+      document.getElementById(screenId).classList.add('active');
       document.getElementById('blip').play();
     }
 
@@ -183,126 +166,96 @@
     function start2v2Game() {
       const code1 = document.getElementById('p1code').value;
       const code2 = document.getElementById('p2code').value;
-      if (!validate(code1) || !validate(code2)) return alert("Codes must be 4 unique digits.");
-      p1Secret = code1; p2Secret = code2;
+      if (!validate(code1) || !validate(code2)) {
+        alert("Each code must be 4 unique digits");
+        return;
+      }
+      p1Secret = code1;
+      p2Secret = code2;
       goTo('p1GuessScreen');
     }
 
     function submitGuess(player) {
-      const guess = document.getElementById(player + 'Guess').value;
-      const secret = player === 'p1' ? p2Secret : p1Secret;
-      if (!validate(guess)) return alert("Invalid guess.");
-      let pots = 0, pans = 0;
-      for (let i = 0; i < 4; i++) {
-        if (guess[i] === secret[i]) pans++;
-        else if (secret.includes(guess[i])) pots++;
+      let guess = document.getElementById(player + 'Guess').value;
+      if (!validate(guess)) {
+        alert("Guess must be 4 unique digits");
+        return;
       }
-      const result = `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
-      document.getElementById(player + 'Result').innerText += result;
+      let pots = 0, pans = 0;
+      let opponentCode = player === 'p1' ? p2Secret : p1Secret;
+      for (let i = 0; i < 4; i++) {
+        if (guess[i] === opponentCode[i]) pans++;
+        else if (opponentCode.includes(guess[i])) pots++;
+      }
+      document.getElementById(player + 'Result').innerText += `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
       if (pans === 4) {
-        alert(`🎉 Player ${player === 'p1' ? 1 : 2} wins!`);
+        alert(`🎉 Player ${player === 'p1' ? '1' : '2'} wins!`);
         restart();
       }
     }
 
     function startAIGame() {
-      const code = document.getElementById('playerCode').value;
-      if (!validate(code)) return alert("Invalid code.");
-      aiSecret = generateCode();
-      let tries = 0, log = [];
-      while (tries++ < 10) {
-        let guess = generateCode(), pots = 0, pans = 0;
-        for (let i = 0; i < 4; i++) {
-          if (guess[i] === code[i]) pans++;
-          else if (code.includes(guess[i])) pots++;
-        }
-        log.push(`AI guessed ${guess} → ${pots} Pot(s), ${pans} Pan(s)`);
-        if (pans === 4) break;
+      const playerCode = document.getElementById('playerCode').value;
+      if (!validate(playerCode)) {
+        alert("Code must be 4 unique digits");
+        return;
       }
-      document.getElementById('aiResult').innerText = log.join('\n');
+      aiSecret = generateAIcode();
+      let tries = 0;
+      let output = [];
+      while (tries < 10) {
+        const attempt = generateAIcode();
+        let pots = 0, pans = 0;
+        for (let i = 0; i < 4; i++) {
+          if (attempt[i] === playerCode[i]) pans++;
+          else if (playerCode.includes(attempt[i])) pots++;
+        }
+        output.push(`AI guessed ${attempt} → ${pots} Pot(s), ${pans} Pan(s)`);
+        if (pans === 4) break;
+        tries++;
+      }
+      document.getElementById('aiResult').innerText = output.join('\n');
     }
 
-    function generateCode() {
-      let nums = [...'0123456789'], code = '';
+    function generateAIcode() {
+      let digits = [..."0123456789"];
+      let code = "";
       for (let i = 0; i < 4; i++) {
-        const idx = Math.floor(Math.random() * nums.length);
-        code += nums[idx];
-        nums.splice(idx, 1);
+        const idx = Math.floor(Math.random() * digits.length);
+        code += digits[idx];
+        digits.splice(idx, 1);
       }
       return code;
     }
 
-    function restart() {
-      location.reload();
+    function createRoom() {
+      const name = document.getElementById('onlineName').value;
+      const roomId = Math.random().toString(36).substring(2, 7);
+      db.ref('rooms/' + roomId).set({ creator: name });
+      document.getElementById('onlineStatus').innerText = `Room Created: ${roomId}`;
     }
 
-    // 🔌 Online Functions
-    function createOnlineGame() {
-      const gameId = document.getElementById('onlineGameId').value;
-      const code = document.getElementById('onlineSecret').value;
-      if (!validate(code)) return alert("Invalid code.");
-      db.ref('games/' + gameId).set({
-        p1: code,
-        p2: null,
-        guesses: [],
-        turn: 'p2'
-      });
-      localStorage.setItem("player", "p1");
-      localStorage.setItem("gameId", gameId);
-      goTo("onlineGameScreen");
-      syncOnlineGame();
-    }
-
-    function joinOnlineGame() {
-      const gameId = document.getElementById('onlineGameId').value;
-      const code = document.getElementById('onlineSecret').value;
-      if (!validate(code)) return alert("Invalid code.");
-      db.ref('games/' + gameId).once('value').then(snapshot => {
-        if (snapshot.exists() && !snapshot.val().p2) {
-          db.ref('games/' + gameId + '/p2').set(code);
-          localStorage.setItem("player", "p2");
-          localStorage.setItem("gameId", gameId);
-          goTo("onlineGameScreen");
-          syncOnlineGame();
-        } else alert("Game full or not found.");
-      });
-    }
-
-    function submitOnlineGuess() {
-      const guess = document.getElementById('onlineGuess').value;
-      if (!validate(guess)) return alert("Invalid guess.");
-      const gameId = localStorage.getItem("gameId");
-      const player = localStorage.getItem("player");
-      db.ref('games/' + gameId + '/guesses').push({ player, guess });
-    }
-
-    function syncOnlineGame() {
-      const gameId = localStorage.getItem("gameId");
-      const player = localStorage.getItem("player");
-      const opponent = player === 'p1' ? 'p2' : 'p1';
-      db.ref('games/' + gameId).on('value', snapshot => {
-        const data = snapshot.val();
-        if (!data || !data[opponent]) {
-          document.getElementById('onlineResult').innerText = "Waiting for opponent...";
-          return;
+    function joinRoom() {
+      const name = document.getElementById('onlineName').value;
+      const roomId = document.getElementById('roomId').value;
+      db.ref('rooms/' + roomId).get().then(snapshot => {
+        if (snapshot.exists()) {
+          document.getElementById('onlineStatus').innerText = `Joined Room: ${roomId}`;
+        } else {
+          document.getElementById('onlineStatus').innerText = `Room not found.`;
         }
-        const guesses = data.guesses || [];
-        const secret = data[opponent];
-        let text = '';
-        guesses.forEach(g => {
-          if (g.player === player) {
-            let pots = 0, pans = 0;
-            for (let i = 0; i < 4; i++) {
-              if (g.guess[i] === secret[i]) pans++;
-              else if (secret.includes(g.guess[i])) pots++;
-            }
-            text += `${g.guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
-            if (pans === 4) text += "🎉 You win!\n";
-          }
-        });
-        document.getElementById('onlineResult').innerText = text;
       });
+    }
+
+    function restart() {
+      p1Secret = "";
+      p2Secret = "";
+      aiSecret = "";
+      document.querySelectorAll('input').forEach(i => i.value = '');
+      document.querySelectorAll('.result').forEach(r => r.innerText = '');
+      goTo('home');
     }
   </script>
 </body>
 </html>
+
