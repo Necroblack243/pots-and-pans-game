@@ -29,13 +29,13 @@
     }
     h1 {
       color: #ff66c4;
-      font-size: 3rem;
-      margin-bottom: 20px;
+      font-size: 2.2rem;
+      margin: 15px;
     }
     button {
       padding: 15px 30px;
       margin: 10px;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       border-radius: 12px;
       background: #1a1a1a;
       color: white;
@@ -60,14 +60,15 @@
     }
     .result {
       margin-top: 20px;
-      font-size: 1.2rem;
+      font-size: 1rem;
       white-space: pre-wrap;
     }
     .logo {
-      font-size: 4rem;
+      font-size: 3rem;
       background: linear-gradient(90deg, #ff66c4, #66e0ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
     }
     .fade-in {
       animation: fadeIn 0.6s ease-in;
@@ -78,74 +79,81 @@
     }
   </style>
   <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
   <div id="home" class="screen active fade-in">
     <div class="logo">POTS & PANS 🎮</div>
     <h1>Guess the Code. Outsmart Your Opponent.</h1>
-    <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
-    <button onclick="goTo('vsAI')">Play vs AI</button>
-    <button onclick="alert('🌐 Online Mode coming soon — stay tuned!')">Online Mode</button>
+    <button onclick="goTo('p1Secret')">2-Player (Same Device)</button>
+    <button onclick="goTo('vsAI')">Play vs AI 🤖</button>
+    <button onclick="goTo('onlineHome')">Online Mode 🌐</button>
   </div>
 
+  <!-- LOCAL 2P MODE -->
   <div id="p1Secret" class="screen fade-in">
-    <h1>Player 1: Enter Secret Code</h1>
+    <h1>Player 1: Enter Code</h1>
     <input id="p1code" maxlength="4" />
     <button onclick="goTo('p2Secret')">Next</button>
   </div>
-
   <div id="p2Secret" class="screen fade-in">
-    <h1>Player 2: Enter Secret Code</h1>
+    <h1>Player 2: Enter Code</h1>
     <input id="p2code" maxlength="4" />
-    <button onclick="start2v2Game()">Start Game</button>
+    <button onclick="start2v2Game()">Start</button>
   </div>
-
   <div id="p1GuessScreen" class="screen fade-in">
-    <h1>Player 1: Guess Player 2's Code</h1>
+    <h1>Player 1: Guess</h1>
     <input id="p1Guess" maxlength="4" />
-    <button onclick="submitGuess('p1')">Submit Guess</button>
+    <button onclick="submitGuess('p1')">Submit</button>
     <div class="result" id="p1Result"></div>
     <button onclick="goTo('p2GuessScreen')">Next Player</button>
   </div>
-
   <div id="p2GuessScreen" class="screen fade-in">
-    <h1>Player 2: Guess Player 1's Code</h1>
+    <h1>Player 2: Guess</h1>
     <input id="p2Guess" maxlength="4" />
-    <button onclick="submitGuess('p2')">Submit Guess</button>
+    <button onclick="submitGuess('p2')">Submit</button>
     <div class="result" id="p2Result"></div>
     <button onclick="goTo('p1GuessScreen')">Next Player</button>
-    <button onclick="restart()">Back to Home</button>
+    <button onclick="restart()">🏠 Home</button>
   </div>
 
+  <!-- AI MODE -->
   <div id="vsAI" class="screen fade-in">
-    <h1>Enter Your Secret Code</h1>
+    <h1>Your Secret Code</h1>
     <input id="playerCode" maxlength="4" />
-    <button onclick="startAIGame()">Start</button>
+    <button onclick="startAIGame()">Start vs AI</button>
     <div class="result" id="aiResult"></div>
+    <button onclick="restart()">🏠 Home</button>
   </div>
 
+  <!-- ONLINE MODE -->
+  <div id="onlineHome" class="screen fade-in">
+    <h1>🌐 Online Mode (Coming Soon)</h1>
+    <p>Realtime Firebase sync on the way 🔥</p>
+    <button onclick="restart()">🏠 Home</button>
+  </div>
+
+  <!-- Sound Effect -->
   <audio id="blip" src="https://cdn.pixabay.com/audio/2022/10/20/audio_dff3c0e199.mp3"></audio>
 
   <script>
-    let p1Secret = "";
-    let p2Secret = "";
-    let aiSecret = "";
+    let p1Secret = "", p2Secret = "", aiSecret = "";
 
-    function goTo(screenId) {
+    function goTo(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
+      document.getElementById(id).classList.add('active');
       document.getElementById('blip').play();
+    }
+
+    function validate(code) {
+      return code.length === 4 && new Set(code).size === 4;
     }
 
     function start2v2Game() {
       const code1 = document.getElementById('p1code').value;
       const code2 = document.getElementById('p2code').value;
-      if (!validate(code1) || !validate(code2)) {
-        alert("Each code must be 4 unique digits");
-        return;
-      }
+      if (!validate(code1) || !validate(code2)) return alert("Each code must be 4 unique digits");
       p1Secret = code1;
       p2Secret = code2;
       document.getElementById('p1Guess').value = '';
@@ -156,74 +164,32 @@
     }
 
     function submitGuess(player) {
-      let guess = document.getElementById(player + 'Guess').value;
-      if (!validate(guess)) {
-        alert("Guess must be 4 unique digits");
-        return;
-      }
+      const guess = document.getElementById(player + 'Guess').value;
+      if (!validate(guess)) return alert("Guess must be 4 unique digits");
+      const opponentCode = player === 'p1' ? p2Secret : p1Secret;
       let pots = 0, pans = 0;
-      let opponentCode = player === 'p1' ? p2Secret : p1Secret;
       for (let i = 0; i < 4; i++) {
         if (guess[i] === opponentCode[i]) pans++;
         else if (opponentCode.includes(guess[i])) pots++;
       }
       const resultText = document.getElementById(player + 'Result');
       resultText.innerText += `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
-
       if (pans === 4) {
         alert(`🎉 Player ${player === 'p1' ? '1' : '2'} wins!`);
         restart();
       }
     }
 
-    function validate(code) {
-      return code.length === 4 && new Set(code).size === 4;
-    }
-
     function restart() {
-      p1Secret = "";
-      p2Secret = "";
-      aiSecret = "";
-      document.getElementById('p1code').value = '';
-      document.getElementById('p2code').value = '';
-      document.getElementById('p1Guess').value = '';
-      document.getElementById('p2Guess').value = '';
-      document.getElementById('p1Result').innerText = '';
-      document.getElementById('p2Result').innerText = '';
-      document.getElementById('playerCode').value = '';
-      document.getElementById('aiResult').innerText = '';
+      p1Secret = p2Secret = aiSecret = '';
+      ['p1code', 'p2code', 'p1Guess', 'p2Guess', 'playerCode'].forEach(id => document.getElementById(id).value = '');
+      ['p1Result', 'p2Result', 'aiResult'].forEach(id => document.getElementById(id).innerText = '');
       goTo('home');
     }
 
-    function startAIGame() {
-      const playerCode = document.getElementById('playerCode').value;
-      if (!validate(playerCode)) {
-        alert("Code must be 4 unique digits");
-        return;
-      }
-      aiSecret = generateAIcode();
-      let attempt = "";
-      let tries = 0;
-      const output = [];
-
-      while (tries < 10) {
-        attempt = generateAIcode();
-        let pots = 0, pans = 0;
-        for (let i = 0; i < 4; i++) {
-          if (attempt[i] === playerCode[i]) pans++;
-          else if (playerCode.includes(attempt[i])) pots++;
-        }
-        output.push(`AI guessed ${attempt} → ${pots} Pot(s), ${pans} Pan(s)`);
-        if (pans === 4) break;
-        tries++;
-      }
-
-      document.getElementById('aiResult').innerText = output.join('\n');
-    }
-
     function generateAIcode() {
-      let digits = [..."0123456789"];
-      let code = "";
+      const digits = [...'0123456789'];
+      let code = '';
       for (let i = 0; i < 4; i++) {
         const idx = Math.floor(Math.random() * digits.length);
         code += digits[idx];
@@ -231,16 +197,38 @@
       }
       return code;
     }
+
+    function startAIGame() {
+      const playerCode = document.getElementById('playerCode').value;
+      if (!validate(playerCode)) return alert("Code must be 4 unique digits");
+      aiSecret = generateAIcode();
+      let tries = 0, output = [];
+      while (tries < 10) {
+        const guess = generateAIcode();
+        let pots = 0, pans = 0;
+        for (let i = 0; i < 4; i++) {
+          if (guess[i] === playerCode[i]) pans++;
+          else if (playerCode.includes(guess[i])) pots++;
+        }
+        output.push(`AI guessed ${guess} → ${pots} Pot(s), ${pans} Pan(s)`);
+        if (pans === 4) break;
+        tries++;
+      }
+      document.getElementById('aiResult').innerText = output.join('\n');
+    }
+
+    // Firebase setup (optional for online play)
     const firebaseConfig = {
-  apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
-  authDomain: "potsandpans-9670a.firebaseapp.com",
-  databaseURL: "https://potsandpans-9670a-default-rtdb.firebaseio.com",
-  projectId: "potsandpans-9670a",
-  storageBucket: "potsandpans-9670a.firebasestorage.app",
-  messagingSenderId: "250440225068",
-  appId: "1:250440225068:web:4a1ba1ddcc578460f85c89",
-  measurementId: "G-D5Q1RGMGLN"
-};
+      apiKey: "your-api-key",
+      authDomain: "your-project-id.firebaseapp.com",
+      databaseURL: "https://your-project-id.firebaseio.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "xxxxxxxxxxxx",
+      appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxx"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
   </script>
 </body>
 </html>
