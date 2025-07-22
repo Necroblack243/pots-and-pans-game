@@ -6,20 +6,17 @@
   <title>Pots & Pans</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-    * {
-      box-sizing: border-box;
-    }
     body {
       margin: 0;
       font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, #111, #000);
+      background: linear-gradient(135deg, #1f1f1f, #000000);
       color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
+      height: 100vh;
+      overflow: hidden;
     }
     .screen {
       display: none;
@@ -32,110 +29,127 @@
     }
     h1 {
       color: #ff66c4;
-      font-size: 2.5rem;
+      font-size: 3rem;
+      margin-bottom: 20px;
     }
     button {
-      padding: 10px 25px;
+      padding: 15px 30px;
       margin: 10px;
-      font-size: 1.1rem;
-      border-radius: 10px;
-      background: #1f1f1f;
+      font-size: 1.2rem;
+      border-radius: 12px;
+      background: #1a1a1a;
       color: white;
-      border: 2px solid #555;
+      border: 2px solid #444;
       cursor: pointer;
+      transition: 0.3s;
+      width: 250px;
     }
     button:hover {
       background: #ff66c4;
       color: black;
+      border-color: #ff66c4;
     }
     input {
       padding: 10px;
       font-size: 1.1rem;
-      margin: 10px;
-      width: 180px;
       border-radius: 8px;
       border: none;
+      margin: 10px 0;
+      width: 200px;
       text-align: center;
     }
     .result {
-      margin-top: 10px;
-      font-size: 1rem;
+      margin-top: 20px;
+      font-size: 1.2rem;
       white-space: pre-wrap;
     }
     .logo {
-      font-size: 3rem;
+      font-size: 4rem;
       background: linear-gradient(90deg, #ff66c4, #66e0ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .fade-in {
+      animation: fadeIn 0.6s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
-
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <!-- HOME SCREEN -->
-  <div id="home" class="screen active">
-    <div class="logo">Pots & Pans 🎮</div>
-    <h1>Choose Your Mode</h1>
+  <div id="home" class="screen active fade-in">
+    <div class="logo">POTS & PANS 🎮</div>
+    <h1>Guess the Code. Outsmart Your Opponent.</h1>
     <button onclick="goTo('p1Secret')">Play 2v2 (Local)</button>
     <button onclick="goTo('vsAI')">Play vs AI</button>
     <button onclick="goTo('onlineHome')">Online Mode</button>
   </div>
 
-  <!-- LOCAL MODE -->
-  <div id="p1Secret" class="screen">
-    <h1>Player 1 Secret Code</h1>
+  <!-- Local Mode -->
+  <div id="p1Secret" class="screen fade-in">
+    <h1>Player 1: Enter Secret Code</h1>
     <input id="p1code" maxlength="4" />
     <button onclick="goTo('p2Secret')">Next</button>
   </div>
-  <div id="p2Secret" class="screen">
-    <h1>Player 2 Secret Code</h1>
+
+  <div id="p2Secret" class="screen fade-in">
+    <h1>Player 2: Enter Secret Code</h1>
     <input id="p2code" maxlength="4" />
     <button onclick="start2v2Game()">Start Game</button>
   </div>
-  <div id="p1GuessScreen" class="screen">
-    <h1>Player 1 Guess</h1>
+
+  <div id="p1GuessScreen" class="screen fade-in">
+    <h1>Player 1: Guess Player 2's Code</h1>
     <input id="p1Guess" maxlength="4" />
-    <button onclick="submitGuess('p1')">Submit</button>
+    <button onclick="submitGuess('p1')">Submit Guess</button>
     <div class="result" id="p1Result"></div>
-    <button onclick="goTo('p2GuessScreen')">Next</button>
-  </div>
-  <div id="p2GuessScreen" class="screen">
-    <h1>Player 2 Guess</h1>
-    <input id="p2Guess" maxlength="4" />
-    <button onclick="submitGuess('p2')">Submit</button>
-    <div class="result" id="p2Result"></div>
-    <button onclick="goTo('p1GuessScreen')">Next</button>
-    <button onclick="restart()">🏠 Home</button>
+    <button onclick="goTo('p2GuessScreen')">Next Player</button>
   </div>
 
-  <!-- VS AI -->
-  <div id="vsAI" class="screen">
-    <h1>Your Secret Code</h1>
+  <div id="p2GuessScreen" class="screen fade-in">
+    <h1>Player 2: Guess Player 1's Code</h1>
+    <input id="p2Guess" maxlength="4" />
+    <button onclick="submitGuess('p2')">Submit Guess</button>
+    <div class="result" id="p2Result"></div>
+    <button onclick="goTo('p1GuessScreen')">Next Player</button>
+    <button onclick="restart()">Back to Home</button>
+  </div>
+
+  <!-- VS AI Mode -->
+  <div id="vsAI" class="screen fade-in">
+    <h1>Enter Your Secret Code</h1>
     <input id="playerCode" maxlength="4" />
     <button onclick="startAIGame()">Start</button>
     <div class="result" id="aiResult"></div>
   </div>
 
-  <!-- ONLINE -->
-  <div id="onlineHome" class="screen">
-    <h1>Online Multiplayer</h1>
-    <input id="roomId" placeholder="Enter Room Name" />
-    <button onclick="createRoom()">Create Room</button>
-    <button onclick="joinRoom()">Join Room</button>
-    <button onclick="restart()">🏠 Home</button>
-    <div class="result" id="onlineStatus"></div>
+  <!-- Online Mode -->
+  <div id="onlineHome" class="screen fade-in">
+    <h1>Enter Room Name</h1>
+    <input id="roomInput" />
+    <input id="onlineCode" maxlength="4" placeholder="Your Secret Code" />
+    <button onclick="joinRoom()">Join Game</button>
+    <div class="result" id="onlineResult"></div>
+    <input id="onlineGuess" maxlength="4" placeholder="Your Guess" />
+    <button onclick="submitOnlineGuess()">Submit Guess</button>
+    <button onclick="restart()">Back to Home</button>
   </div>
 
+  <audio id="blip" src="https://cdn.pixabay.com/audio/2022/10/20/audio_dff3c0e199.mp3"></audio>
+
   <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCQTleAmWT8ljV_NsjsZxCfe55ABmz-cGA",
       authDomain: "potsandpans-9670a.firebaseapp.com",
       databaseURL: "https://potsandpans-9670a-default-rtdb.firebaseio.com",
       projectId: "potsandpans-9670a",
-      storageBucket: "potsandpans-9670a.firebasestorage.app",
+      storageBucket: "potsandpans-9670a.appspot.com",
       messagingSenderId: "250440225068",
       appId: "1:250440225068:web:4a1ba1ddcc578460f85c89",
       measurementId: "G-D5Q1RGMGLN"
@@ -143,12 +157,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let p1Secret = "";
-    let p2Secret = "";
+    let p1Secret = "", p2Secret = "", aiSecret = "";
 
-    function goTo(id) {
+    function goTo(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+      document.getElementById(screenId).classList.add('active');
+      document.getElementById('blip').play();
     }
 
     function validate(code) {
@@ -158,7 +172,7 @@
     function start2v2Game() {
       const code1 = document.getElementById('p1code').value;
       const code2 = document.getElementById('p2code').value;
-      if (!validate(code1) || !validate(code2)) return alert("Each code must be 4 unique digits");
+      if (!validate(code1) || !validate(code2)) return alert("Codes must be 4 unique digits");
       p1Secret = code1;
       p2Secret = code2;
       goTo('p1GuessScreen');
@@ -166,75 +180,72 @@
 
     function submitGuess(player) {
       let guess = document.getElementById(player + 'Guess').value;
-      if (!validate(guess)) return alert("Guess must be 4 unique digits");
+      if (!validate(guess)) return alert("Invalid guess");
+      let opponent = player === 'p1' ? p2Secret : p1Secret;
       let pots = 0, pans = 0;
-      const secret = player === 'p1' ? p2Secret : p1Secret;
       for (let i = 0; i < 4; i++) {
-        if (guess[i] === secret[i]) pans++;
-        else if (secret.includes(guess[i])) pots++;
+        if (guess[i] === opponent[i]) pans++;
+        else if (opponent.includes(guess[i])) pots++;
       }
-      const resultText = document.getElementById(player + 'Result');
-      resultText.innerText += `${guess} → ${pots} Pots, ${pans} Pans\n`;
-      if (pans === 4) {
-        alert(`🎉 Player ${player === 'p1' ? '1' : '2'} wins!`);
-        restart();
-      }
+      document.getElementById(player + 'Result').innerText += `${guess} → ${pots} Pot(s), ${pans} Pan(s)\n`;
+      if (pans === 4) alert(`Player ${player === 'p1' ? '1' : '2'} wins!`);
+    }
+
+    function restart() {
+      location.reload();
+    }
+
+    function generateAIcode() {
+      let digits = [..."0123456789"], code = "";
+      for (let i = 0; i < 4; i++) code += digits.splice(Math.floor(Math.random() * digits.length), 1);
+      return code;
     }
 
     function startAIGame() {
       const code = document.getElementById('playerCode').value;
       if (!validate(code)) return alert("Code must be 4 unique digits");
-      const guesses = [];
-      let tries = 0;
-      while (tries < 10) {
-        const ai = generateAIcode();
-        let p = 0, pan = 0;
+      let output = [], tries = 0;
+      while (tries++ < 10) {
+        let guess = generateAIcode(), pots = 0, pans = 0;
         for (let i = 0; i < 4; i++) {
-          if (ai[i] === code[i]) pan++;
-          else if (code.includes(ai[i])) p++;
+          if (guess[i] === code[i]) pans++;
+          else if (code.includes(guess[i])) pots++;
         }
-        guesses.push(`${ai} → ${p} Pots, ${pan} Pans`);
-        if (pan === 4) break;
-        tries++;
+        output.push(`AI guessed ${guess} → ${pots} Pot(s), ${pans} Pan(s)`);
+        if (pans === 4) break;
       }
-      document.getElementById('aiResult').innerText = guesses.join('\n');
-    }
-
-    function generateAIcode() {
-      const digits = [...'0123456789'];
-      let code = "";
-      for (let i = 0; i < 4; i++) {
-        const r = Math.floor(Math.random() * digits.length);
-        code += digits[r];
-        digits.splice(r, 1);
-      }
-      return code;
-    }
-
-    function createRoom() {
-      const room = document.getElementById('roomId').value;
-      const secret = prompt("Enter your 4-digit secret code");
-      if (!validate(secret)) return alert("Invalid code");
-      db.ref(`rooms/${room}`).set({ p1: secret });
-      document.getElementById('onlineStatus').innerText = "Room created. Waiting for opponent...";
+      document.getElementById('aiResult').innerText = output.join('\n');
     }
 
     function joinRoom() {
-      const room = document.getElementById('roomId').value;
-      const secret = prompt("Enter your 4-digit secret code");
-      if (!validate(secret)) return alert("Invalid code");
-      db.ref(`rooms/${room}`).once('value').then(snapshot => {
-        const data = snapshot.val();
-        if (!data) return alert("Room not found");
-        db.ref(`rooms/${room}/p2`).set(secret);
-        alert("Both players joined! Add game logic here");
+      const room = document.getElementById('roomInput').value;
+      const code = document.getElementById('onlineCode').value;
+      if (!validate(code)) return alert("Invalid code");
+      db.ref(`rooms/${room}/code`).set(code);
+      db.ref(`rooms/${room}/guesses`).on('value', snap => {
+        const guesses = snap.val() || [];
+        let resultText = "";
+        guesses.forEach(g => {
+          let pots = 0, pans = 0;
+          for (let i = 0; i < 4; i++) {
+            if (g[i] === code[i]) pans++;
+            else if (code.includes(g[i])) pots++;
+          }
+          resultText += `${g} → ${pots} Pot(s), ${pans} Pan(s)\n`;
+        });
+        document.getElementById('onlineResult').innerText = resultText;
       });
     }
 
-    function restart() {
-      goTo('home');
-      document.querySelectorAll('input').forEach(i => i.value = '');
-      document.querySelectorAll('.result').forEach(r => r.innerText = '');
+    function submitOnlineGuess() {
+      const room = document.getElementById('roomInput').value;
+      const guess = document.getElementById('onlineGuess').value;
+      if (!validate(guess)) return alert("Invalid guess");
+      db.ref(`rooms/${room}/guesses`).once('value', snap => {
+        let guesses = snap.val() || [];
+        guesses.push(guess);
+        db.ref(`rooms/${room}/guesses`).set(guesses);
+      });
     }
   </script>
 </body>
